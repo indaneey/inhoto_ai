@@ -2,9 +2,12 @@ import 'dotenv/config';
 import express from "express";
 import path from "path";
 import cors from "cors";
-import { createServer as createViteServer } from "vite";
 import invitationRoutes from "./routes/invitationRoutes.js";
 import fs from 'fs-extra';
+import sharp from 'sharp';
+
+// Optimize sharp for lower CPU usage in resource-constrained environments
+sharp.concurrency(1);
 
 async function startServer() {
   const app = express();
@@ -24,9 +27,13 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
-  console.log('NODE_ENV is:', process.env.NODE_ENV);
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  const isProduction = process.env.NODE_ENV === "production";
+  console.log(`Starting server in ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode...`);
+
+  if (!isProduction) {
+    // Only load Vite in development to save CPU/Memory
+    console.log('Initializing Vite Dev Server...');
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -34,10 +41,14 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    if (await fs.pathExists(distPath)) {
+      app.use(express.static(distPath));
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+    } else {
+      console.warn('Production build (dist/) not found. Static files will not be served.');
+    }
   }
 
   app.listen(PORT, "0.0.0.0", () => {
