@@ -1,0 +1,45 @@
+{
+    "title": {
+        "font": "Playfair Display",
+        "size": 70,
+        "color": "#1a1a1a",
+        "spacing": 1.2
+    },
+    "names": {
+        "font": "Great Vibes",
+        "size": 110,
+        "color": "#b8860b",
+        "spacing": 1.5
+    },
+    "family": {
+        "font": "Montserrat",
+        "size": 36,
+        "color": "#444444",
+        "spacing": 1.1
+    },
+    "date": {
+        "font": "Montserrat",
+        "size": 40,
+        "color": "#1a1a1a",
+        "spacing": 1.2
+    },
+    "venue": {
+        "font": "Montserrat",
+        "size": 40,
+        "color": "#1a1a1a",
+        "spacing": 1.2
+    },
+    "phone": {
+        "font": "Montserrat",
+        "size": 34,
+        "color": "#666666",
+        "spacing": 1.0
+    },
+    "quote": {
+        "font": "Libre Baskerville",
+        "size": 32,
+        "color": "#555555",
+        "spacing": 1.4,
+        "italic": true
+    }
+}
