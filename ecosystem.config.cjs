@@ -1,6 +1,6 @@
 module.exports = {
   apps : [{
-    name: "architect-server",
+    name: "inhoto-ai",
     script: "./dist-server/server.js",
     env: {
       NODE_ENV: "production",
