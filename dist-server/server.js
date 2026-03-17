@@ -7,7 +7,7 @@ import invitationRoutes from "./routes/invitationRoutes.js";
 import fs from 'fs-extra';
 async function startServer() {
     const app = express();
-    const PORT = 3000;
+    const PORT = 4000;
     // Ensure public directories exist
     await fs.ensureDir(path.join(process.cwd(), 'public', 'images'));
     app.use(cors());
