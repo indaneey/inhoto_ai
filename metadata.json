@@ -1,0 +1,5 @@
+{
+  "name": "AI Invitation Architect",
+  "description": "A production-ready backend service for generating AI-powered invitation designs with dynamic layouts and SVG overlays.",
+  "requestFramePermissions": []
+}
