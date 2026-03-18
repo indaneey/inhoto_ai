@@ -399,6 +399,16 @@ export default function App() {
       height: result.dimensions?.height || 1024
     };
 
+
+
+    //lowercase the objects type for fabric.js v5
+    json.objects.forEach((obj: any) => {
+      obj.type = obj.type.toLowerCase();
+    });
+    if(json.backgroundImage){
+      json.backgroundImage.type = json.backgroundImage.type.toLowerCase();
+    }
+
     // Ensure backgroundImage has the src for restoration
     // if (canvas.backgroundImage && canvas.backgroundImage instanceof fabric.FabricImage) {
     //   json.backgroundImage = canvas.backgroundImage.toObject();
