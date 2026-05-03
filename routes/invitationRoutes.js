@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-import { generateInvitation } from '../app/controllers/invitationController.js';
+import { generateInvitation, generatePrompt } from '../app/controllers/invitationController.js';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -16,6 +16,7 @@ const upload = multer({ storage });
 
 const router = express.Router();
 
+router.post('/generate-prompt', generatePrompt);
 router.post('/generate-invitation', upload.single('backgroundImage'), generateInvitation);
 
 export default router;

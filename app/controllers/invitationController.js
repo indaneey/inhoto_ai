@@ -6,13 +6,42 @@ import { detectSafeZone } from '../../services/safeZoneDetector.js';
 import { generateLayout } from '../../services/layoutEngine.js';
 import { renderSVG } from '../../services/svgRenderer.js';
 import { analyzeDesign } from '../../services/designAnalyzer.js';
+import { generateImagePrompt } from '../../services/promptGenerator.js';
+import { fetchRelevantAssets } from '../../services/assetFetcher.js';
+
+export const generatePrompt = async (req, res) => {
+  const { category } = req.body;
+  
+  if (!category) {
+    return res.status(400).json({ error: 'Missing required field: category' });
+  }
+
+  try {
+    const prompt = await generateImagePrompt(category);
+    res.json({ success: true, prompt });
+  } catch (error) {
+    console.error('Prompt Generation Error:', error);
+    res.status(500).json({ success: false, error: 'Failed to generate prompt' });
+  }
+};
 
 export const generateInvitation = async (req, res) => {
-  const { type, prompt } = req.body;
+  const { type, prompt, dimension = 'portrait' } = req.body;
   const uploadedFile = req.file;
 
   if (!type || !prompt) {
     return res.status(400).json({ error: 'Missing required fields: type, and prompt' });
+  }
+
+  let bgWidth = 1024;
+  let bgHeight = 1024;
+
+  if (dimension === 'portrait') {
+    bgWidth = 832;
+    bgHeight = 1216;
+  } else if (dimension === 'landscape') {
+    bgWidth = 1216;
+    bgHeight = 832;
   }
 
   try {
@@ -25,8 +54,11 @@ export const generateInvitation = async (req, res) => {
     } else {
       filename = `bg_${Date.now()}.png`;
       bgPath = path.join(process.cwd(), 'public', 'images', filename);
+      console.log('Generating visual prompt via Gemini...');
+      const imagePrompt = await generateImagePrompt(prompt);
+      console.log(`Generated visual prompt: ${imagePrompt}`);
       console.log('Generating background...');
-      await generateBackground(prompt, bgPath);
+      await generateBackground(imagePrompt, bgPath, bgWidth, bgHeight);
     }
 
     // Use sharp to get actual image dimensions
@@ -48,25 +80,32 @@ export const generateInvitation = async (req, res) => {
     console.log('Unified AI Analysis...');
     const designSuggestions = await analyzeDesign(bgPath, prompt, safeZone);
     const blocksData = designSuggestions.blocks || [];
+    const finalSafeZone = designSuggestions.safeZone || safeZone;
     console.log(`AI extracted and placed ${blocksData.length} text blocks.`);
 
     // 4. Generate Layout
     console.log('Finalizing layout...');
-    const layout = generateLayout(safeZone, blocksData);
+    const layout = generateLayout(finalSafeZone, blocksData);
 
     // 5. Render SVG (Pass accurate width/height)
     console.log('Rendering SVG...');
     const svg = renderSVG(layout, width, height);
+
+    // 6. Fetch relevant stickers/components from inHoto API
+    console.log('Fetching relevant decorative assets...');
+    const assets = await fetchRelevantAssets(type);
+    console.log(`Found ${assets.stickers.length} stickers, ${assets.components.length} components.`);
 
     res.json({
       success: true,
       background: `/images/${filename}`,
       svg,
       layout,
-      safeZone,
+      safeZone: finalSafeZone,
       designSuggestions,
       blocks: blocksData,
-      dimensions: { width, height }
+      dimensions: { width, height },
+      assets
     });
   } catch (error) {
     console.error('Generation Error:', error);

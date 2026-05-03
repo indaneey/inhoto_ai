@@ -43,18 +43,25 @@ export const analyzeDesign = async (imagePath, prompt, safeZone) => {
       SAFE ZONE: x:${safeZone.x}, y:${safeZone.y}, width:${safeZone.width}, height:${safeZone.height}
       
       TASK:
-      1. EXTRACT CONTENT: Identify all names, dates, venues, etc. Treat each as a generic text block.
-      2. DESIGN LAYOUT: Determine x/y position (center), fontSize, fontFamily, color (hex), alignment, width, height and origin.x, origin.y (center, left, right, top, bottom).
+      1. DETECT SAFE ZONE: Review the suggested safe zone (x:${safeZone.x}, y:${safeZone.y}, width:${safeZone.width}, height:${safeZone.height}). If it overlaps with important details, adjust it to the truest empty/plain area. Output this as "safeZone".
+      2. DESIGN LAYOUT: Extract text content and incorporate decorative shapes (lines, rectangles, circles).
+      3. For each block, specify a standard fabric.js "type": "i-text", "textbox", "rect", "circle", "line", "image_placeholder".
+         - For "image_placeholder", you MUST ALWAYS provide explicit "width" and "height" (e.g. 200, 300).
+         - For dividers, use type "line" or a thin "rect" with width and height.
+      4. Provide position (x, y), dimensions (width, height), and origin (e.g. {x: "center", y: "center"}).
+      5. For text, include: text, fontSize, fontFamily, alignment, fill. For shapes: fill, stroke, strokeWidth, radius, rx/ry.
       
       AVAILABLE FONTS: ${fontsList.join(", ")}
       
       STRICT ARTISTIC RULES:
-      - ABSOLUTE ZERO OVERLAP: Text blocks must NEVER touch each other. Keep significant padding.
-      - NEGATIVE SPACE ONLY: Place text in plain/empty areas. NEVER overlay on busy background subjects.
+      - ABSOLUTE ZERO OVERLAP: Elements must NEVER touch each other. Keep significant padding.
+      - NEGATIVE SPACE ONLY: Place elements in plain/empty areas inside the "safeZone".
       - FONT SELECTION: Use ONLY the available fonts listed above.
       - LEGIBILITY: Ensure high contrast.
+      - SEPARATE SCHEDULE DETAILS: NEVER combine venue, date, time, or day into a single text block. Each piece of schedule information MUST be its own separate block. For example: "Friday" = one block, "24th October 2028" = one block, "12:30 PM" = one block, "Venue: Central Mosque" = one block. This allows users to independently move and edit each element.
+      - SEPARATE NAMES: Bride and groom names should also be in separate text blocks.
       
-      Return as a JSON object with a 'blocks' array.`;
+      Return as a JSON object containing "safeZone" and a "blocks" array.`;
 
       const response = await  ai.models.generateContent({ 
         model: "gemini-2.5-pro",
@@ -64,6 +71,16 @@ export const analyzeDesign = async (imagePath, prompt, safeZone) => {
           responseSchema: {
             type: Type.OBJECT,
             properties: {
+              safeZone: {
+                type: Type.OBJECT,
+                properties: {
+                  x: { type: Type.NUMBER },
+                  y: { type: Type.NUMBER },
+                  width: { type: Type.NUMBER },
+                  height: { type: Type.NUMBER }
+                },
+                required: ["x", "y", "width", "height"]
+              },
               blocks: {
                 type: Type.ARRAY,
                 items: {
@@ -76,6 +93,12 @@ export const analyzeDesign = async (imagePath, prompt, safeZone) => {
                     fontSize: { type: Type.NUMBER },
                     fontFamily: { type: Type.STRING },
                     color: { type: Type.STRING },
+                    fill: { type: Type.STRING },
+                    stroke: { type: Type.STRING },
+                    strokeWidth: { type: Type.NUMBER },
+                    radius: { type: Type.NUMBER },
+                    rx: { type: Type.NUMBER },
+                    ry: { type: Type.NUMBER },
                     alignment: { type: Type.STRING, enum: ["center", "left", "right"] },
                     width: { type: Type.NUMBER },
                     height: { type: Type.NUMBER },
@@ -88,11 +111,11 @@ export const analyzeDesign = async (imagePath, prompt, safeZone) => {
                       required: ["x", "y"]
                     }
                   },
-                  required: ["text", "type", "x", "y", "fontSize", "fontFamily", "color", "alignment", "origin", "width", "height"]
+                  required: ["type", "x", "y"]
                 }
               }
             },
-            required: ["blocks"]
+            required: ["safeZone", "blocks"]
           }
         }
       });
