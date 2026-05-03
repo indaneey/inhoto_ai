@@ -687,17 +687,7 @@ export default function App() {
             <Sparkles className="w-6 h-6 text-amber-600" />
             <span className="font-semibold tracking-tight text-xl">Architect AI</span>
           </div>
-          <div className="flex bg-zinc-100 p-1 rounded-full border border-black/5 mx-4">
-            {(['portrait', 'landscape', 'square'] as const).map(d => (
-              <button
-                key={d}
-                onClick={() => setDimension(d)}
-                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full transition-all ${dimension === d ? 'bg-white text-zinc-800 shadow-sm' : 'text-zinc-500 hover:text-zinc-800'}`}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
+
           <div className="flex items-center gap-4">
             {currentView === 'editor' && (
               <>
